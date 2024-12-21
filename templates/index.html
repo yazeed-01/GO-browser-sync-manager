@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Saver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: rgba(229, 231, 235, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen" style="background-color: #121212;">
+    <div class="container mx-auto px-4 py-8">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800"></h1>
+            <div class="flex space-x-4">
+                <!-- Email Button -->
+                <button id="emailBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </button>
+            
+                <!-- Extension Button with Text -->
+                <button id="extensionBtn" onclick="window.location.href='/exten'" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105 flex items-center space-x-2">
+                    <!-- Extension Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12h-5V7H9v5H4v2h5v5h5v-5h5z"/>
+                    </svg>
+                    <!-- Extension Text -->
+                    <span class="text-sm">Extension</span>
+                </button>
+            
+                <!-- Add Link Button -->
+                <button id="addLinkBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+
+            
+        </header>
+
+        <div id="categories" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <!-- Categories will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Add Link Modal -->
+    <div id="addLinkModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
+        <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-8 max-w-md w-full shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 text-white">Add New Link</h2>
+            <form id="addLinkForm">
+                <div class="mb-4">
+                    <label for="linkName" class="block text-gray-300 text-sm font-bold mb-2">Name:</label>
+                    <input type="text" id="linkName" name="linkName" class="bg-[#2C2C2C] text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="linkUrl" class="block text-gray-300 text-sm font-bold mb-2">URL:</label>
+                    <input type="url" id="linkUrl" name="linkUrl" class="bg-[#2C2C2C] text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="linkCategory" class="block text-gray-300 text-sm font-bold mb-2">Category:</label>
+                    <input type="text" id="linkCategory" name="linkCategory" class="bg-[#2C2C2C] text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded transition duration-300">
+                        Save Link
+                    </button>
+                    <button type="button" id="cancelAddLink" class="bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold py-2 px-4 rounded transition duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Links Modal -->
+    <div id="linksModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
+        <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-8 max-w-4xl w-full max-h-[80vh] shadow-lg flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="linksModalTitle" class="text-2xl font-bold text-white"></h2>
+                <button id="closeLinksModal" class="text-gray-400 hover:text-gray-300 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="linksContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto custom-scrollbar">
+                <!-- Links will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div id="emailModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
+        <div class="bg-[#1E1E1E] border border-gray-700 rounded-lg p-8 max-w-4xl w-full max-h-[80vh] shadow-lg flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-white">Emails</h2>
+                <button id="closeEmailModal" class="text-gray-400 hover:text-gray-300 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="emailContainer" class="overflow-y-auto custom-scrollbar">
+                <ul id="emailList" class="space-y-2">
+                    <!-- Emails will be dynamically added here -->
+                </ul>
+            </div>
+            <div class="mt-4">
+                <form id="addEmailForm" class="flex items-center">
+                    <input type="email" id="newEmail" name="newEmail" class="bg-[#2C2C2C] text-white border border-gray-600 rounded-l w-full py-2 px-3 focus:outline-none focus:border-blue-500" placeholder="Enter new email" required>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-r transition duration-300">
+                        Add
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let categories = [];
+let links = [];
+let emails = [];
+
+async function fetchCategories() {
+    try {
+        const response = await fetch('/links');
+        if (!response.ok) {
+            throw new Error('Error fetching links');
+        }
+        links = await response.json();
+        const uniqueCategories = [...new Set(links.map(link => link.Category))];
+        categories = uniqueCategories.map(name => ({ Name: name }));
+        renderCategories();
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+    }
+}
+
+async function fetchLinks() {
+    try {
+        const response = await fetch('/links');
+        if (!response.ok) {
+            throw new Error('Error fetching links');
+        }
+        links = await response.json();
+        await fetchCategories(); // Update categories after fetching links
+    } catch (error) {
+        console.error('Error fetching links:', error);
+    }
+}
+
+async function fetchEmails() {
+    try {
+        const response = await fetch('/emails');
+        if (!response.ok) {
+            throw new Error('Error fetching emails');
+        }
+        emails = await response.json();
+        renderEmails();
+    } catch (error) {
+        console.error('Error fetching emails:', error);
+    }
+}
+
+async function addLink(name, url, category) {
+    try {
+        const response = await fetch('/links', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ Name: name, URL: url, Category: category }),
+        });
+        if (!response.ok) {
+            throw new Error('Error adding link');
+        }
+        const newLink = await response.json();
+        links.push(newLink);
+        await fetchCategories();
+    } catch (error) {
+        console.error('Error adding link:', error);
+    }
+}
+
+async function addEmail(email) {
+    try {
+        const response = await fetch('/emails', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ Email: email }),
+        });
+        if (!response.ok) {
+            throw new Error('Error adding email');
+        }
+        const newEmail = await response.json();
+        emails.push(newEmail);
+        renderEmails();
+    } catch (error) {
+        console.error('Error adding email:', error);
+    }
+}
+
+function renderCategories() {
+    const categoriesContainer = document.getElementById('categories');
+    categoriesContainer.innerHTML = '';
+
+    if (!categories || categories.length === 0) {
+        categoriesContainer.innerHTML = '<div class="text-gray-400">No categories found.</div>';
+        return;
+    }
+
+    categories.forEach(category => {
+        const categoryLinks = links.filter(link => link.Category === category.Name);
+        const categoryElement = document.createElement('div');
+        categoryElement.className = 'bg-[#1E1E1E] rounded-lg shadow-md p-4 flex flex-col items-center justify-center text-center cursor-pointer transition duration-300 ease-in-out transform hover:scale-105';
+        categoryElement.innerHTML = `
+            <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                <span class="text-2xl font-bold text-white">${category.Name.charAt(0).toUpperCase()}</span>
+            </div>
+            <h2 class="text-lg font-semibold text-white">${category.Name}</h2>
+            <p class="text-sm text-gray-400">${categoryLinks.length} links</p>
+        `;
+
+        categoryElement.addEventListener('click', function() {
+            showLinksModal(category.Name);
+        });
+
+        categoriesContainer.appendChild(categoryElement);
+    });
+}
+
+function showLinksModal(category) {
+    const linksModal = document.getElementById('linksModal');
+    const linksModalTitle = document.getElementById('linksModalTitle');
+    const linksContainer = document.getElementById('linksContainer');
+
+    linksModalTitle.textContent = category;
+    linksContainer.innerHTML = '';
+
+    const categoryLinks = links.filter(link => link.Category === category);
+    if (categoryLinks.length === 0) {
+        linksContainer.innerHTML = '<div class="text-gray-400">No links found for this category.</div>';
+    } else {
+        categoryLinks.forEach(link => {
+            const linkElement = document.createElement('a');
+            linkElement.href = link.URL;
+            linkElement.target = '_blank';
+            linkElement.rel = 'noopener noreferrer';
+            linkElement.className = 'bg-[#2C2C2C] rounded p-4 flex flex-col items-center justify-center text-center hover:bg-[#3C3C3C] transition duration-300 ease-in-out';
+            linkElement.innerHTML = `
+                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                    <span class="text-lg font-bold text-white">${link.Name.charAt(0).toUpperCase()}</span>
+                </div>
+                <span class="text-sm font-medium text-white">${link.Name}</span>
+            `;
+            linksContainer.appendChild(linkElement);
+        });
+    }
+
+    linksModal.classList.remove('hidden');
+    linksModal.classList.add('flex');
+}
+
+function renderEmails() {
+    const emailList = document.getElementById('emailList');
+    emailList.innerHTML = '';
+
+    if (!emails || emails.length === 0) {
+        emailList.innerHTML = '<li class="text-gray-400">No emails found.</li>';
+        return;
+    }
+
+    emails.forEach(email => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between bg-[#2C2C2C] p-2 rounded';
+        li.innerHTML = `
+            <span class="text-white">${email.Email || 'Undefined Email'}</span>
+            <button class="copy-email text-gray-300 hover:text-white" data-email="${email.Email || ''}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                </svg>
+            </button>
+        `;
+        emailList.appendChild(li);
+    });
+
+    document.querySelectorAll('.copy-email').forEach(button => {
+        button.addEventListener('click', function() {
+            const email = this.getAttribute('data-email');
+            navigator.clipboard.writeText(email).then(() => {
+                alert('Email copied to clipboard!');
+            });
+        });
+    });
+}
+
+// Event Listeners
+document.getElementById('addLinkBtn').addEventListener('click', function() {
+    document.getElementById('addLinkModal').classList.remove('hidden');
+    document.getElementById('addLinkModal').classList.add('flex');
+});
+
+document.getElementById('cancelAddLink').addEventListener('click', function() {
+    document.getElementById('addLinkModal').classList.remove('flex');
+    document.getElementById('addLinkModal').classList.add('hidden');
+});
+
+document.getElementById('closeLinksModal').addEventListener('click', function() {
+    document.getElementById('linksModal').classList.remove('flex');
+    document.getElementById('linksModal').classList.add('hidden');
+});
+
+document.getElementById('emailBtn').addEventListener('click', function() {
+    document.getElementById('emailModal').classList.remove('hidden');
+    document.getElementById('emailModal').classList.add('flex');
+});
+
+document.getElementById('closeEmailModal').addEventListener('click', function() {
+    document.getElementById('emailModal').classList.remove('flex');
+    document.getElementById('emailModal').classList.add('hidden');
+});
+
+document.getElementById('addLinkForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('linkName').value;
+    const url = document.getElementById('linkUrl').value;
+    const category = document.getElementById('linkCategory').value;
+
+    await addLink(name, url, category);
+
+    document.getElementById('addLinkModal').classList.remove('flex');
+    document.getElementById('addLinkModal').classList.add('hidden');
+    document.getElementById('addLinkForm').reset();
+});
+
+document.getElementById('addEmailForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('newEmail').value;
+    await addEmail(email);
+    document.getElementById('newEmail').value = '';
+});
+
+// Initial data fetch
+async function initializeData() {
+    await Promise.all([
+        fetchLinks(),
+        fetchEmails()
+    ]);
+}
+
+initializeData();
+
+
+    </script>
+</body>
+</html>
+

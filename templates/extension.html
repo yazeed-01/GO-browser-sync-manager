@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Extension Manager</title>
+    <style>
+        /* Global Styles for Dark Mode */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #ddd;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #121212;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            color: #fff;
+        }
+
+        h3 {
+            color: #3498db;
+        }
+
+        form {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #555;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #3498db;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #333;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 700px;
+            border-radius: 10px;
+        }
+
+        .modal-header {
+            color: #fff;
+            font-size: 1.5em;
+        }
+
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .extension-list {
+            list-style-type: none;
+            padding: 0;
+            color: #ddd;
+        }
+
+        .extension-item {
+            background-color: #444;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .extension-item a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .no-results {
+            color: #e74c3c;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Browser Extension Manager</h1>
+
+    <!-- Form to save extension name -->
+    <form id="saveForm">
+        <label for="extensionSaveName">Save Extension Name:</label>
+        <input type="text" id="extensionSaveName" placeholder="Enter extension name to save" required>
+        <button type="submit">Save Extension</button>
+        <button type="button" id="showAllBtn">Show All Extensions</button>
+    </form>
+
+    <!-- Form to search for an extension -->
+    <form id="searchForm">
+        <label for="extensionSearchName">Search Extension:</label>
+        <input type="text" id="extensionSearchName" placeholder="Enter extension name to search" required>
+        <button type="submit">Search Extension</button>
+    </form>
+
+    <!-- Result Section -->
+    <div id="result"></div>
+
+    <!-- Modal to show all saved extensions -->
+    <div id="extensionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="closeModalBtn" style="cursor:pointer;">&times;</span>
+                <h3>All Saved Extensions</h3>
+            </div>
+            <div class="modal-body">
+                <ul id="extensionList" class="extension-list">
+                    <!-- Extension items will be populated here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Save extension name to the database
+        function saveExtension(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('extensionSaveName').value;
+
+            fetch('/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    alert(data.message);
+                    document.getElementById('saveForm').reset();
+                })
+                .catch((error) => console.error('Error:', error));
+        }
+
+        // Search for an extension and fetch its links
+        function searchExtension(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('extensionSearchName').value.trim().toLowerCase().replace(/\s+/g, "");
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Searching...</p>';
+
+            fetch(`/search?name=${encodeURIComponent(name)}`)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Error occurred while searching for extensions.');
+                    }
+                    return response.json();
+                })
+                .then((data) => displayResult(data))
+                .catch((error) => {
+                    resultDiv.innerHTML = `<p class="no-results">${error.message}</p>`;
+                });
+        }
+
+        function displayResult(results) {
+            const resultDiv = document.getElementById('result');
+            let html = '<h2>Search Results</h2>';
+            let foundResults = false;
+
+            for (const [browser, extension] of Object.entries(results)) {
+                if (extension && extension.name) {
+                    foundResults = true;
+                    html += `
+                        <div class="browser-result">
+                            <h3>${browser.charAt(0).toUpperCase() + browser.slice(1)}</h3>
+                            <p><strong>${extension.name}</strong></p>
+                            <p><a href="${extension.url}" target="_blank">Click here to download</a></p>
+                        </div>
+                    `;
+                }
+            }
+
+            if (!foundResults) {
+                html += '<p class="no-results">No extensions found for the given search term.</p>';
+            }
+
+            resultDiv.innerHTML = html;
+        }
+
+        // Show all extensions in a modal
+        function showAllExtensions() {
+            fetch('/extensions')
+                .then((response) => response.json())
+                .then((extensions) => {
+                    const extensionList = document.getElementById('extensionList');
+                    extensionList.innerHTML = '';
+
+                    extensions.forEach((extension) => {
+                        const li = document.createElement('li');
+                        li.classList.add('extension-item');
+                        li.innerHTML = `
+                            <span>${extension.name}</span>
+                            <a href="${extension.url}" target="_blank">Download</a>
+                        `;
+                        extensionList.appendChild(li);
+                    });
+
+                    document.getElementById('extensionModal').style.display = 'block';
+                })
+                .catch((error) => console.error('Error fetching extensions:', error));
+        }
+
+        // Close the modal
+        function closeModal() {
+            document.getElementById('extensionModal').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('saveForm').addEventListener('submit', saveExtension);
+            document.getElementById('searchForm').addEventListener('submit', searchExtension);
+            document.getElementById('showAllBtn').addEventListener('click', showAllExtensions);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+        });
+    </script>
+</body>
+
+</html>
